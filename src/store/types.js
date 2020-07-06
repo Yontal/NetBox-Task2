@@ -1,0 +1,11 @@
+//MUTATIONS
+export const MUTATE_PERSONS = 'MUTATE_PERSONS';
+
+//ACTIONS
+export const PULL_PERSONS = 'PULL_PERSONS';
+export const UPDATE_PERSON = 'UPDATE_PERSON';
+export const DELETE_PERSON = 'DELETE_PERSON';
+export const ADD_PERSON = 'ADD_PERSON';
+
+//GETTERS
+export const GET_PERSONS = 'GET_PERSONS';
