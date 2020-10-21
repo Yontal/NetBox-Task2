@@ -1,184 +1,109 @@
 <template>
-    <div>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th scope="col" @click="sortUp('id')">ID</th>
-                    <th scope="col" @click="sortUp('name')">Name</th>
-                    <th scope="col" @click="sortUp('age')">Age</th>
-                    <th scope="col" @click="sortUp('phone')">Phone</th>
-                    <th scope="col" @click="sortUp('email')">Email</th>
-                    <th scope="col"></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="(person, key) in persons" :key="key">
-                    <td>
-                        {{ person.id }}
-                    <td>
-                        {{ editingPerson.id === person.id ? '' : person.name }}
-                        <input 
-                            v-if="editingPerson.id === person.id"
-                            v-model="editingPerson.name" 
-                            class="form-control" 
-                            type="text" 
-                            placeholder="Type name" >
-                    </td>
-                    <td>
-                        {{ editingPerson.id === person.id ? '' : person.age }}
-                        <input 
-                            v-if="editingPerson.id === person.id"
-                            v-model="editingPerson.age" 
-                            class="form-control" 
-                            type="text" 
-                            placeholder="Type age">
-                    </td>
-                    <td>
-                        {{ editingPerson.id === person.id ? '' : person.phone }}
-                        <input 
-                            v-if="editingPerson.id === person.id"
-                            v-model="editingPerson.phone" 
-                            class="form-control" 
-                            type="text" 
-                            placeholder="Type phone">
-                    </td>
-                    <td>
-                        {{ editingPerson.id === person.id ? '' : person.email }}
-                        <input 
-                            v-if="editingPerson.id === person.id"
-                            v-model="editingPerson.email" 
-                            class="form-control" 
-                            type="text" 
-                            placeholder="Type email">
-                    </td>
-                    <td>
-                        <button v-if="!editingFlag" @click="editPerson(person)" type="button" class="btn btn-warning btn-sm" >Edit</button>
-                        <button v-if="editingPerson.id === person.id && editingPerson.id === person.id" @click="updatePerson" type="button" class="btn btn-success btn-sm">Save</button>
-                        <button v-if="!editingFlag" @click="deletePerson(person.id)" type="button" class="btn btn-danger btn-sm">Delete</button>
-                    </td> 
-                </tr>
-                <tr v-if="addNewPersonFlag">
-                    <td>
-                        
-                    <td>
-                        <input 
-                            v-model="editingPerson.name" 
-                            class="form-control" 
-                            type="text" 
-                            placeholder="Type name" >
-                    </td>
-                    <td>
-                        <input 
-                            v-model="editingPerson.age" 
-                            class="form-control" 
-                            type="text" 
-                            placeholder="Type age">
-                    </td>
-                    <td>
-                        <input 
-                            v-model="editingPerson.phone" 
-                            class="form-control" 
-                            type="text" 
-                            placeholder="Type phone">
-                    </td>
-                    <td>
-                        <input 
-                            v-model="editingPerson.email" 
-                            class="form-control" 
-                            type="text" 
-                            placeholder="Type email">
-                    </td>
-                    <td>
-                        <button v-if="addNewPersonFlag" @click="addPerson" type="button" class="btn btn-success btn-sm">Save</button>
-                    </td> 
-                </tr>
-            </tbody>
-        </table>
-        <button type="button" class="btn btn-primary btn-sm" @click="addNewPersonFlag = editingFlag = true" v-if="!addNewPersonFlag && !editingFlag">Add line</button>
-        <div class="alert alert-danger" v-for="(error, key) in errorMessages" :key="key" role="alert">
-            {{ error }}
-        </div>
-    </div>
+  <v-container>
+    <v-row>
+      <v-card>
+        <v-card-text>
+          <v-data-table
+            :headers="headers"
+            :items="persons"
+            :search="search"
+            sort-by="id"
+            class="elevation-1"
+          >
+            <template v-slot:top>
+              <v-toolbar flat>
+                <v-toolbar-title>My contacts</v-toolbar-title>
+                <v-spacer></v-spacer>
+                <v-text-field
+                  v-model="search"
+                  append-icon="mdi-magnify"
+                  label="Search"
+                  single-line
+                  hide-details
+                ></v-text-field>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" depressed @click="addPerson">Add</v-btn>
+              </v-toolbar>
+            </template>
+            <template v-slot:item.actions="{ item }">
+              <v-icon class="mr-2" small @click="editPerson(item)">
+                mdi-pencil
+              </v-icon>
+              <v-icon small @click="deletePerson(item.id)"> mdi-delete </v-icon>
+            </template>
+          </v-data-table>
+        </v-card-text>
+      </v-card>
+      <v-dialog v-model="editingFlag" persistent max-width="600px">
+        <PersonEditForm
+          :editingPerson="editingPerson"
+          @closeEditingForm="closeForm"
+        />
+      </v-dialog>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
-import * as types from '../store/types';
-import Person from '../models/Person';
+import { mapGetters } from "vuex";
+import * as types from "../store/types";
+import Person from "../models/Person";
+import PersonEditForm from "../components/PersonEditForm";
 
 export default {
-    data(){
-        return{
-            editingPerson: new Person(),
-            editingFlag: false,
-            addNewPersonFlag: false,
-            errorMessages: []
-        }
+  components: {
+    PersonEditForm,
+  },
+  data() {
+    return {
+      editingPerson: new Person(),
+      editingFlag: false,
+      search: "",
+      headers: [
+        {
+          text: "ID",
+          align: "start",
+          value: "id",
+          width: 75
+        },
+        { text: "Name", value: "name", align: "center" },
+        { text: "Age", value: "age", align: "center", width: 75 },
+        { text: "Phone", value: "phone", align: "center" },
+        { text: "Email", value: "email", align: "center" },
+        {
+          text: "Actions",
+          value: "actions",
+          sortable: false,
+          align: "center",
+          width: 230,
+        },
+      ],
+    };
+  },
+  computed: {
+    ...mapGetters({
+      persons: types.GET_PERSONS,
+    }),
+  },
+  methods: {
+    closeForm() {
+      this.editingFlag = false;
+      this.editingPerson = new Person();
     },
-    computed:{
-        ...mapGetters({
-            persons: types.GET_PERSONS
-        })
+    editPerson(person) {
+      this.editingPerson = JSON.parse(JSON.stringify(person));
+      this.editingFlag = true;
     },
-    methods:{
-        editPerson(person){
-            this.editingPerson = JSON.parse(JSON.stringify(person));
-            this.editingFlag = true;
-        },
-        updatePerson(){
-            this.errorMessages = [];
-            this.checkInput();
-            if(this.errorMessages.length === 0){
-                this.$store.dispatch(types.UPDATE_PERSON, this.editingPerson);
-                this.editingPerson = new Person();
-                this.editingFlag = false;
-            }
-        },
-        addPerson(){
-            this.errorMessages = [];
-            this.checkInput();
-            if(this.errorMessages.length === 0){
-                this.$store.dispatch(types.ADD_PERSON, this.editingPerson);
-                this.editingPerson = new Person();
-                this.editingFlag = false;
-                this.addNewPersonFlag = false;
-            }
-        },
-        deletePerson(id){
-            this.$store.dispatch(types.DELETE_PERSON, id);
-        },
-        checkInput(){
-            if(!this.editingPerson.name){this.errorMessages.push('Please type name')}
-            if(!this.editingPerson.age){this.errorMessages.push('Please type age')}  
-            if(!this.editingPerson.phone){this.errorMessages.push('Please type phone')}  
-            if(!this.editingPerson.email){this.errorMessages.push('Please type email')}      
-        },
-        sortUp(field){
-            this.persons.sort((a,b) => {
-                if (a[field] > b[field]) return 1;
-                if (a[field] == b[field]) return 0;
-                if (a[field] < b[field]) return -1;
-            })
-        }
+    addPerson() {
+      this.editingPerson = new Person();
+      this.editingFlag = true;
     },
-    created(){
-        this.$store.dispatch(types.PULL_PERSONS);
-    }    
-}
+    deletePerson(id) {
+      this.$store.dispatch(types.DELETE_PERSON, id);
+    },
+  },
+  created() {
+    this.$store.dispatch(types.PULL_PERSONS);
+  },
+};
 </script>
-
-<style scoped>
-table {
-    text-align: center;
-}
-td {
-    vertical-align: middle;
-}
-button {
-    width: 75px;
-    margin: 5px;
-}
-th {
-    cursor: pointer;
-}
-</style>
